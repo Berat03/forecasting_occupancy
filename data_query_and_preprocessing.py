@@ -11,7 +11,7 @@ def query(start_date, end_date, start_time, end_time):  # Query function, to be 
     response = table.get_item(
         Key={
             'Date': start_date,
-            'Time': '00:00'
+            'Time': start_time
         }
     )
     print(response['Item'])
