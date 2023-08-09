@@ -2,7 +2,28 @@ import pandas as pd
 import json
 import boto3
 from boto3.dynamodb.conditions import Key
+import csv
 
+def get_aws_data_to_csv(table_name, csv_file_path ):
+    dynamodb = boto3.client('dynamodb')
+    response = dynamodb.scan(TableName=table_name)
+    scanned_items = response['Items']
+
+    with open(csv_file_path, 'w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+
+        csv_writer.writerow(['Date', 'Time', 'Total'])
+        for item in scanned_items:
+            date = item['Date']['S']
+            time = item['Time']['S']
+            total = item['Total']['S']
+            total = int(total.replace(',', '')) # AWS stores like this, possible to change?
+
+            csv_writer.writerow([date, time, total])
+
+    print(f'saved to {csv_file_path}')
+
+get_aws_data_to_csv(table_name="Bill_Bryson_Data", csv_file_path='./Data/Bill_Bryson_Data.csv')
 
 def query(start_date, end_date, start_time, end_time):  # Query function, to be used in website
     client = boto3.resource('dynamodb')
@@ -39,3 +60,4 @@ def pre_process(csv_data_file_path, resample_period='H'):
 #query(start_date='2023-07-20', end_date='2023-07-30', start_time="00:50", end_time="22:50")
 #print(pre_process(csv_data_file_path="./Data/Bill_Bryson_Data.csv", resample_period='H'))
 #print(pre_process(csv_data_file_path="./Data/bbtable_data.csv", resample_period='H'))
+#get_aws_data_to_csv(table_name="Bill_Bryson_Data", csv_file_path='./Data/Bill_Bryson_Data.csv')
