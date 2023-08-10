@@ -1,7 +1,5 @@
 import pandas as pd
 from statsmodels.tsa.stattools import adfuller, pacf, acf
-from statsmodels.graphics.tsaplots import plot_pacf, plot_acf
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -29,22 +27,6 @@ def pre_process(csv_data_file_path, resample_period='H'):
 
     assert (df_resample['Total'].isna().sum() == 0)
     return df_resample
-
-
-df = pre_process(csv_data_file_path='./Data/bbtable_data.csv', resample_period='H')
-df = df.iloc[100:-1400]
-# Mean and variance changed based on indexing
-print(adfuller(df["Total"].values))
-# df['Total'] = df['Total'].diff()
-# df = df.iloc[1::] # due to differenceing
-# df.plot()
-# plt.show()
-
-plot_acf(df)
-plt.show()
-plot_pacf(df)
-plt.show()
-
 
 
 
