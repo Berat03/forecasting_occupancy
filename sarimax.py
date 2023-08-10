@@ -3,7 +3,7 @@ import pmdarima as pmd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sklearn.metrics import mean_squared_error
-from data_explore_and_process import pre_process
+from data_preprocess import pre_process
 
 
 # ARIMA model fitting
@@ -34,7 +34,7 @@ def sarimax_apply(csv_data_file_path, resample_period, actual, pred_period, cut_
     results_manual_sarima = mod.fit()
 
     plt.plot(df['Total'][-actual:], label='Actual')
-    predicted = results_manual_sarima.get_prediction(start=-(pred_period))  # Predictions for the last 100 time units
+    predicted = results_manual_sarima.get_prediction(start=-pred_period)  # Predictions for the last 100 time units
     plt.plot(predicted.predicted_mean, label='Predicted', linestyle='dashed')
     plt.legend()
     plt.show()
