@@ -1,9 +1,9 @@
 import pandas as pd
 import json
+import datetime
 import boto3
 from boto3.dynamodb.conditions import Key
 import csv
-import datetime
 
 dynamodb = boto3.resource('dynamodb')
 
