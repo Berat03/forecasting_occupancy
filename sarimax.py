@@ -20,17 +20,16 @@ def find_parameters(df, col, train=0.8, cut_off=0):  # Need to make so can put d
                                         start_p=0,
                                         start_d=0,
                                         start_q=0,
-                                        max_p=10,
-                                        max_d=10,
-                                        max_q=10,
+                                        start_P=0,
+                                        start_Q=0,
                                         trend='c',
                                         seasonal=True,
                                         m=24,
-                                        # add sarima modelling
-
                                         information_criterion='aic',
                                         trace=True,
-                                        error_action='ignore')
+                                        error_action='ignore',
+                                        njobs = -1,
+                                        )
 
     print(results_auto_arima)
 
@@ -43,32 +42,36 @@ def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs)
     df = df.iloc[:(len(df) - cut_off)]
 
     mod = SARIMAX(endog=df['Total'],
+                  exog=df['Weekend'],
                   order=(4, 1, 1),
                   seasonal_order=(3, 0, 1, 24),
                   trend='c')
 
-    results = mod.fit(maxiter=100)
+    results = mod.fit(maxiter=10)
 
-    predicted = results.get_prediction(start=-pred_period)
-    forecast = results.get_forecast(steps=forecast_periods)
+    # For forecast, create an array of the same shape as forecast_periods
+    exog_forecast = df['Weekend'][-forecast_periods:].values.reshape(-1, 1)
+
+    predicted = results.get_prediction(start=-pred_period, exog=df['Weekend'])
+    forecast = results.get_forecast(steps=forecast_periods, exog=exog_forecast)
 
     plt.plot(df.index[-pred_period:], df['Total'][-pred_period:], label='Actual (Historical and Forecasted)')
     plt.plot(predicted.predicted_mean.index, predicted.predicted_mean, label='Historical Predicted', linestyle='dashed')
     plt.plot(forecast.predicted_mean.index, forecast.predicted_mean, label='Forecasted', linestyle='dotted')
 
     plt.legend()
-    plt.title('Actual vs Predicted vs Forecasted Values')
-    plt.xlabel('Time')
-    plt.ylabel('Value')
+    plt.xlabel('Date')
+    plt.ylabel('Occupancy')
     plt.show()
 
+# Usage
+
+
 # Example usage
-# sarimax_apply(df, pred_period=30, forecast_periods=10, cut_off=0)
 
 
 
-df1 = pre_process(csv_data_file_path='./Data/Bill_Bryson_Data.csv', resample_period='H').iloc[:-300]
+df1 = pre_process(csv_data_file_path='./Data/Bill_Bryson_Data.csv', resample_period='H')
+sarimax_apply(df=df1, pred_period=72, forecast_periods=72, cut_off=100)
 
-sarimax_apply(df=df1, actual=72,
-              pred_period=72, forecast_periods=60, cut_off=72)
-#find_parameters(df=df1, col='Total', cut_off=72)
+#find_parameters(df=df1, col='Total', cut_off=0)
