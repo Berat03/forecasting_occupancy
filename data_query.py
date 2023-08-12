@@ -5,30 +5,44 @@ from boto3.dynamodb.conditions import Key
 import csv
 import datetime
 
+dynamodb = boto3.resource('dynamodb')
+
 
 def get_aws_data_to_csv(table_name, csv_file_path):
-    dynamodb = boto3.client('dynamodb')
-    response = dynamodb.scan(TableName=table_name)
-    scanned_items = response['Items']
+    table = dynamodb.Table(table_name)
+    response = table.scan()
 
-    with open(csv_file_path, 'w', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file)
+    data = response['Items']
 
-        csv_writer.writerow(['Date', 'Time', 'Total'])
-        for item in scanned_items:
-            date = item['Date']['S']
-            time = item['Time']['S']
-            total = item['Total']['S']
-            total = int(total.replace(',', ''))  # AWS stores like this, possible to change?
+    while 'LastEvaluatedKey' in response: # pagination of sort
+        response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+        data.extend(response['Items'])
 
-            csv_writer.writerow([date, time, total])
+    headers = data[0].keys()
+    print(headers)
+    print(len(data))
+
+    desired_fields = ['Date', 'Time', 'Total']
+
+    with open(csv_file_path, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=desired_fields)
+        writer.writeheader()
+
+        for row in data:
+            try: #missing data
+                row['Total'] = row['Total'].replace(',', '')
+            except:
+                row['Total'] = None
+            filtered_row = {field: row[field] for field in desired_fields}
+            writer.writerow(filtered_row)
+
+    print(f'Data written to {csv_file_path}')
 
     print(f'saved to {csv_file_path}')
 
 
 def query(start_date, end_date, start_time, end_time):  # Query function, to be used in website
-    client = boto3.resource('dynamodb')
-    table = client.Table('Bill_Bryson_Data')
+    table = dynamodb.Table('Bill_Bryson_Data')
 
     response = table.get_item(
         Key={
@@ -46,4 +60,4 @@ def query(start_date, end_date, start_time, end_time):  # Query function, to be 
         print(item)
 
 # query(start_date='2023-07-20', end_date='2023-07-30', start_time="00:50", end_time="22:50")
-# get_aws_data_to_csv(table_name="Bill_Bryson_Data", csv_file_path='./Data/Bill_Bryson_Data.csv')
+get_aws_data_to_csv(table_name="Bill_Bryson_Data", csv_file_path='./Data/Bill_Bryson_Data.csv')
