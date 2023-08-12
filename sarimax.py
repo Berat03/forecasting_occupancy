@@ -3,7 +3,9 @@ import pmdarima as pmd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sklearn.metrics import mean_squared_error
-from data_preprocess import pre_process
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
 
 """Calculate Mean Squared Error (MSE)
 actual_values = df['Total'][-pred_period:].dropna()
@@ -11,8 +13,28 @@ predicted_mean = predicted.predicted_mean.dropna()
 mse = mean_squared_error(actual_values, predicted_mean)
 print("Mean Squared Error (MSE):", mse)"""
 
+# Pre-processing data from CSV to pandas df
+def pre_process(csv_data_file_path, resample_period='H'):
+    df = pd.read_csv(csv_data_file_path, delimiter=',')
+    df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], format='%Y-%m-%d %H:%M')
+    df.dropna(inplace=True)
+    # Exog variables
+    holidays = pd.date_range(start='2023-07-14', end='2023-07-28', freq='D')
+    terms = pd.date_range(start='2023-07-29', end='2023-08-12', freq='D')
+    df['Holiday'] = pd.to_datetime(df['Datetime'].dt.date).isin(holidays).astype(int)
+    df['Term'] = pd.to_datetime(df['Datetime'].dt.date).isin(terms).astype(int)
+    df['Weekend'] = df['Datetime'].apply(lambda x: 1 if x.weekday() >= 5 else 0).astype(int)
+    df.set_index('Datetime', inplace=True)
+    df.sort_index(ascending=True, inplace=True)
+    df.drop(columns=['Date', 'Time'], inplace=True)
+    agg_functions = {'Total': 'median', 'Weekend': 'max', 'Holiday': 'max', 'Term': 'max'} #
+    df_resample = df.resample(resample_period).agg(agg_functions).bfill()
 
-# ARIMA model fitting
+    assert (df_resample['Total'].isna().sum() == 0)
+    return df_resample
+
+
+# Finding parameters for SARIMAX
 def find_parameters(df, col, train=0.8, cut_off=0):  # Need to make so can put df in
     df = df.iloc[:(len(df) - cut_off)]  # Getting rid of the mainly useless (empty) holiday data
     time_series_data_col = df[col].iloc[:int(len(df) * train)]
@@ -35,8 +57,6 @@ def find_parameters(df, col, train=0.8, cut_off=0):  # Need to make so can put d
 
 
 # Apply ARIMA and print results
-import matplotlib.pyplot as plt
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs):
     df = df.iloc[:(len(df) - cut_off)]
