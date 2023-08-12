@@ -22,7 +22,7 @@ def pre_process(csv_data_file_path, resample_period='H'):
     df.set_index('Datetime', inplace=True)
     df.sort_index(ascending=True, inplace=True)
     df.drop(columns=['Date', 'Time'], inplace=True)
-    agg_functions = {'Total': 'median', 'Weekend': 'max', 'Holiday': 'max', 'Term': 'max'} #
+    agg_functions = {'Total': 'median', 'Weekend': 'max', 'Holiday': 'max', 'Term': 'max'}  #
     df_resample = df.resample(resample_period).agg(agg_functions).bfill()
 
     assert (df_resample['Total'].isna().sum() == 0)
@@ -34,8 +34,8 @@ def find_parameters(df, col, exog_var, train=0.8, cut_off=0):  # Need to make so
     df = df.iloc[:(len(df) - cut_off)]  # Getting rid of the mainly useless (empty) holiday data
     time_series_data_col = df[col].iloc[:int(len(df) * train)]
     exog = df[exog_var].iloc[:int(len(df) * train)].values.reshape(-1, 1)  # Reshape the exog variable
-    results_auto_arima = pmd.auto_arima(y = time_series_data_col,
-                                        exogenous= exog,
+    results_auto_arima = pmd.auto_arima(y=time_series_data_col,
+                                        exogenous=exog,
                                         start_p=0,
                                         start_d=0,
                                         start_q=0,
@@ -58,6 +58,8 @@ def find_parameters(df, col, exog_var, train=0.8, cut_off=0):  # Need to make so
 order=(4, 1, 1),
                   seasonal_order=(3, 0, 1, 24),
 """
+
+
 def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs):
     df = df.iloc[:(len(df) - cut_off)]
 
@@ -69,21 +71,23 @@ def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs)
 
     results = mod.fit(maxiter=50)
 
-    # For forecast, create an array of the same shape as forecast_periods
     exog_forecast = df['Weekend'][-forecast_periods:].values.reshape(-1, 1)
 
     predicted = results.get_prediction(start=-pred_period, exog=df['Weekend'])
-    print(predicted)
     forecast = results.get_forecast(steps=forecast_periods, exog=exog_forecast)
 
+    predicted_mean_clipped = np.clip(predicted.predicted_mean, 0, 1800)  # range currently [0,1800]
+    forecast_mean_clipped = np.clip(forecast.predicted_mean, 0, 1800)
+
     plt.plot(df.index[-pred_period:], df['Total'][-pred_period:], label='Actual (Historical and Forecasted)')
-    plt.plot(predicted.predicted_mean.index, predicted.predicted_mean, label='Historical Predicted', linestyle='dashed')
-    plt.plot(forecast.predicted_mean.index, forecast.predicted_mean, label='Forecasted', linestyle='dotted')
+    plt.plot(predicted.predicted_mean.index, predicted_mean_clipped, label='Historical Predicted', linestyle='dashed')
+    plt.plot(forecast.predicted_mean.index, forecast_mean_clipped, label='Forecasted', linestyle='dotted')
 
     plt.legend()
     plt.xlabel('Date')
     plt.ylabel('Occupancy')
     plt.show()
+
 
 def MSE(df, pred_period, predicted):
     actual_values = df['Total'][-pred_period:].dropna()
