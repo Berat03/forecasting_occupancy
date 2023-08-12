@@ -6,16 +6,26 @@ from sklearn.metrics import mean_squared_error
 from data_preprocess import pre_process
 
 
+"""Calculate Mean Squared Error (MSE)
+actual_values = df['Total'][-pred_period:].dropna()
+predicted_mean = predicted.predicted_mean.dropna()
+mse = mean_squared_error(actual_values, predicted_mean)
+print("Mean Squared Error (MSE):", mse)"""
+
+
 # ARIMA model fitting
-def find_parameters(time_series_data_col):
+def find_parameters(df, col, train=0.8): # Need to make so can put df in
+    time_series_data_col = df[col].iloc[:int(len(df) *train)]
     results_auto_arima = pmd.auto_arima(time_series_data_col,
                                         start_p=0,
                                         start_d=0,
                                         start_q=0,
-                                        max_p=3,
-                                        max_d=3,
-                                        max_q=3,
+                                        max_p=10,
+                                        max_d=10,
+                                        max_q=10,
                                         trend='c',
+                                        # add sarima modelling
+
                                         information_criterion='aic',
                                         trace=True,
                                         error_action='ignore')
@@ -23,31 +33,35 @@ def find_parameters(time_series_data_col):
     print(results_auto_arima)
 
 # Apply ARIMA and print results
-def sarimax_apply(csv_data_file_path, resample_period, actual, pred_period, cut_off=0):
-    df = pre_process(csv_data_file_path=csv_data_file_path, resample_period=resample_period)
-    df = df.iloc[:(len(df) - cut_off)]  # Getting rid of the mainly useless (empty)  holiday data
+def sarimax_apply(df, actual, pred_period, forecast_periods, cut_off=0):
+    df = df.iloc[:(len(df) - cut_off)]  # Getting rid of the mainly useless (empty) holiday data
 
     # using result from auto.arima
     mod = SARIMAX(endog=df['Total'],
-                  order=(3, 1, 0),
-                  trend='c')
-    results_manual_sarima = mod.fit()
+                  order=(7, 1, 4),
+                  trend='c', )
 
-    plt.plot(df['Total'][-actual:], label='Actual')
-    predicted = results_manual_sarima.get_prediction(start=-pred_period)  # Predictions for the last 100 time units
-    plt.plot(predicted.predicted_mean, label='Predicted', linestyle='dashed')
+    # Fit the SARIMAX model
+    results = mod.fit()
+
+    # Get predictions for historical data and forecasted data
+    predicted = results.get_prediction(start=-pred_period)
+    forecast = results.get_forecast(steps=forecast_periods)
+
+    # Plot historical and forecasted values
+    plt.plot(df.index[-actual:], df['Total'][-actual:], label='Historical Actual')
+    plt.plot(predicted.predicted_mean.index, predicted.predicted_mean, label='Historical Predicted', linestyle='dashed')
+    plt.plot(forecast.predicted_mean.index, forecast.predicted_mean, label='Forecasted', linestyle='dotted')
     plt.legend()
+    plt.title('Actual vs Predicted vs Forecasted Values')
+    plt.xlabel('Time')
+    plt.ylabel('Value')
     plt.show()
 
-    actual_values = df['Total'][-pred_period:].dropna()
-    predicted_mean = predicted.predicted_mean.dropna()
 
-    # Calculate Mean Squared Error (MSE)
-    mse = mean_squared_error(actual_values, predicted_mean)
-    print("Mean Squared Error (MSE):", mse)
+#sarimax_apply(df = pre_process(csv_data_file_path='./Data/bbtable_data.csv',resample_period='H'), actual=300,
+              #pred_period=120, forecast_periods=100, cut_off=1300)
+#find_parameters(df = pre_process(csv_data_file_path='./Data/bbtable_data.csv', resample_period='H'), col= 'Total' )
 
 
-#sarimax_apply(csv_data_file_path='./Data/Bill_Bryson_Data.csv',
-             # resample_period='30T', actual=300, pred_period=200, cut_off=100)
-sarimax_apply(csv_data_file_path='./Data/bbtable_data.csv',
-              resample_period='H', actual=200, pred_period=150, cut_off=400)
+
