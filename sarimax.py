@@ -30,10 +30,15 @@ def pre_process(csv_data_file_path, resample_period='H'):
 
 
 # Finding parameters for SARIMAX
-def find_parameters(df, col, exog_var, train=0.8, cut_off=0):  # Need to make so can put df in
-    df = df.iloc[:(len(df) - cut_off)]  # Getting rid of the mainly useless (empty) holiday data
+def find_parameters(df, col, exog_var=None, train=0.8, cut_off=0, m=24):
+    df = df.iloc[:(len(df) - cut_off)]
     time_series_data_col = df[col].iloc[:int(len(df) * train)]
-    exog = df[exog_var].iloc[:int(len(df) * train)].values.reshape(-1, 1)  # Reshape the exog variable
+
+    if exog_var is not None:
+        exog = df[exog_var].iloc[:int(len(df) * train)].values.reshape(-1, 1)
+    else:
+        exog = None
+
     results_auto_arima = pmd.auto_arima(y=time_series_data_col,
                                         exogenous=exog,
                                         start_p=0,
@@ -43,7 +48,7 @@ def find_parameters(df, col, exog_var, train=0.8, cut_off=0):  # Need to make so
                                         start_Q=0,
                                         trend='c',
                                         seasonal=True,
-                                        m=24,
+                                        m=m,
                                         information_criterion='aic',
                                         trace=True,
                                         error_action='ignore',
@@ -56,9 +61,8 @@ def find_parameters(df, col, exog_var, train=0.8, cut_off=0):  # Need to make so
 # Apply ARIMA and print results
 """
 order=(4, 1, 1),
-                  seasonal_order=(3, 0, 1, 24),
+seasonal_order=(3, 0, 1, 24),
 """
-
 
 def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs):
     df = df.iloc[:(len(df) - cut_off)]
