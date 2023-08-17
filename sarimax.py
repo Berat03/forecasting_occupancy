@@ -6,6 +6,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tools.eval_measures import rmse
 
 
 # Pre-processing data from CSV to pandas df
@@ -76,11 +77,11 @@ def sarimax_apply(df, pred_period, forecast_periods, order, seasonal_order, cut_
     predicted = results.get_prediction(start=-pred_period, exog=df['Weekend'])
     forecast = results.get_forecast(steps=forecast_periods, exog=exog_forecast)
 
-    predicted_mean_clipped = np.clip(predicted.predicted_mean, 0, 1800)  # range currently [0,1800]
+    predicted_mean_clipped = np.clip(predicted.predicted_mean, 0, 1800) # Occupancy [0, 1800]
     forecast_mean_clipped = np.clip(forecast.predicted_mean, 0, 1800)
 
-    plt.plot(df.index[-pred_period:], df['Total'][-pred_period:], label='Actual ')
-    plt.plot(predicted.predicted_mean.index, predicted_mean_clipped, label='Historical Predicted', linestyle='dashed')
+    plt.plot(df.index[-pred_period:], df['Total'][-pred_period:], label='Actual')
+    plt.plot(predicted.predicted_mean.index, predicted_mean_clipped, label='Predicted', linestyle='dotted')
     plt.plot(forecast.predicted_mean.index, forecast_mean_clipped, label='Forecasted', linestyle='dotted')
 
     plt.legend()
@@ -88,6 +89,7 @@ def sarimax_apply(df, pred_period, forecast_periods, order, seasonal_order, cut_
     plt.ylabel('Occupancy')
     plt.show()
 
+    print(rmse(predicted_mean_clipped, df['Total'][-pred_period:]))
 def MSE(df, pred_period, predicted):
     actual_values = df['Total'][-pred_period:].dropna()
     predicted_mean = predicted.predicted_mean.dropna()
