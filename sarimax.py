@@ -43,6 +43,8 @@ def find_parameters(df, col, exog_var=None, train=0.8, cut_off=0, m=24, seasonal
                                         exogenous=exog,
                                         start_p=0,
                                         start_d=0,
+                                        d= 0,
+                                        D= 0,
                                         start_q=0,
                                         start_P=0,
                                         start_Q=0,
@@ -58,22 +60,16 @@ def find_parameters(df, col, exog_var=None, train=0.8, cut_off=0, m=24, seasonal
     print(results_auto_arima)
 
 
-# Apply ARIMA and print results
-"""
-order=(4, 1, 1),
-seasonal_order=(3, 0, 1, 24),
-"""
-
-def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs):
+def sarimax_apply(df, pred_period, forecast_periods, order, seasonal_order, cut_off=0, *args, **kwargs):
     df = df.iloc[:(len(df) - cut_off)]
 
     mod = SARIMAX(endog=df['Total'],
                   exog=df['Weekend'],
-                  order=(1, 0, 0),
-                  seasonal_order=(1, 0, 0, 24),
+                  order=order,  # 1, 0, 0
+                  seasonal_order=seasonal_order,  # 1, 0, 0, 24
                   trend='c')
 
-    results = mod.fit(maxiter=50)
+    results = mod.fit(maxiter=100)
 
     exog_forecast = df['Weekend'][-forecast_periods:].values.reshape(-1, 1)
 
@@ -83,7 +79,7 @@ def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs)
     predicted_mean_clipped = np.clip(predicted.predicted_mean, 0, 1800)  # range currently [0,1800]
     forecast_mean_clipped = np.clip(forecast.predicted_mean, 0, 1800)
 
-    plt.plot(df.index[-pred_period:], df['Total'][-pred_period:], label='Actual (Historical and Forecasted)')
+    plt.plot(df.index[-pred_period:], df['Total'][-pred_period:], label='Actual ')
     plt.plot(predicted.predicted_mean.index, predicted_mean_clipped, label='Historical Predicted', linestyle='dashed')
     plt.plot(forecast.predicted_mean.index, forecast_mean_clipped, label='Forecasted', linestyle='dotted')
 
@@ -91,7 +87,6 @@ def sarimax_apply(df, pred_period, forecast_periods, cut_off=0, *args, **kwargs)
     plt.xlabel('Date')
     plt.ylabel('Occupancy')
     plt.show()
-
 
 def MSE(df, pred_period, predicted):
     actual_values = df['Total'][-pred_period:].dropna()
