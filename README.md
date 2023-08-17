@@ -5,6 +5,12 @@ This project tracks and forecasts the occupancy of Durham Unviersity Bill Bryson
 ### Method
 Data is webscraped and stored using AWS. Currently using a SARIMAX model, implemented with the statsmodel and pmdarima packages.
 
+### Progress
+Currently the 
+
+![myplot](https://github.com/Berat03/SARIMAX/assets/83041608/ff2e9e3d-a409-4d72-ae93-2dbac6e7d32c)
+
+
 ### Prerequistites 
 
 ### Future Plans
