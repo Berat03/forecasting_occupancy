@@ -30,7 +30,7 @@ def pre_process(csv_data_file_path, resample_period='H'):
 
 
 # Finding parameters for SARIMAX
-def find_parameters(df, col, exog_var=None, train=0.8, cut_off=0, m=24):
+def find_parameters(df, col, exog_var=None, train=0.8, cut_off=0, m=24, seasonality=True):
     df = df.iloc[:(len(df) - cut_off)]
     time_series_data_col = df[col].iloc[:int(len(df) * train)]
 
@@ -47,7 +47,7 @@ def find_parameters(df, col, exog_var=None, train=0.8, cut_off=0, m=24):
                                         start_P=0,
                                         start_Q=0,
                                         trend='c',
-                                        seasonal=True,
+                                        seasonal=seasonality,
                                         m=m,
                                         information_criterion='aic',
                                         trace=True,
