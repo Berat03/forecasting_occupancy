@@ -6,11 +6,14 @@ This project tracks and forecasts the occupancy of Durham Unviersity Bill Bryson
 Data is webscraped and stored using AWS. Currently using a SARIMAX model, implemented with the statsmodel and pmdarima packages.
 
 ### Progress
-Currently the 
+Currently progress with prediction and forecasting...
 
-![myplot](https://github.com/Berat03/SARIMAX/assets/83041608/ff2e9e3d-a409-4d72-ae93-2dbac6e7d32c)
+![img](https://github.com/Berat03/SARIMAX/assets/83041608/7e5f35c3-61dd-4bc7-8b1f-99b19549e7a2)
 
-
+- Need to implement term/holiday/exam exogenous variables (currently only dow).
+- Need to collect more data.
+- Need to begin creating back-end to connect with DynamoDB table.
+- 
 ### Prerequistites 
 
 ### Future Plans
