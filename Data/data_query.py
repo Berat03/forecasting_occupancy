@@ -41,8 +41,8 @@ def get_aws_data_to_csv(table_name, csv_file_path):
     print(f'saved to {csv_file_path}')
 
 
-def query(start_date, end_date, start_time, end_time):  # Query function, to be used in website
-    table = dynamodb.Table('Bill_Bryson_Data')
+def query(start_date, end_date, start_time, end_time, table_name):  # Query function, to be used in website
+    table = dynamodb.Table(table_name)
 
     response = table.get_item(
         Key={
@@ -53,11 +53,10 @@ def query(start_date, end_date, start_time, end_time):  # Query function, to be 
     print(response['Item'])
 
     response = table.query(
-        KeyConditionExpression=Key('Date').eq(start_date) & Key('Time').between(start_time, end_time)
+        KeyConditionExpression=Key('Date').between(start_date, end_date) & Key('Time').between(start_time, end_time)
     )
 
     for item in response['Items']:
         print(item)
 
-# query(start_date='2023-07-20', end_date='2023-07-30', start_time="00:50", end_time="22:50")
-get_aws_data_to_csv(table_name="Bill_Bryson_Data", csv_file_path='./Data/Bill_Bryson_Data.csv')
+get_aws_data_to_csv('Bill_Bryson_Data', './Data/Data_AWS_141223')

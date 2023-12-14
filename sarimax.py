@@ -95,3 +95,4 @@ def MSE(df, pred_period, predicted):
     predicted_mean = predicted.predicted_mean.dropna()
     mse = mean_squared_error(actual_values, predicted_mean)
     print("Mean Squared Error (MSE):", mse)
+

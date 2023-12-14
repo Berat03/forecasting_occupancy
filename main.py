@@ -5,11 +5,10 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from sarimax import find_parameters, sarimax_apply
 
 
-df1 = pre_process(csv_data_file_path='./Data/Bill_Bryson_Data.csv', resample_period='H')
-sarimax_apply(df=df1, pred_period=72, forecast_periods=72, cut_off=250, order=(4,0,4), seasonal_order=(1, 0, 1, 24))
+df1 = pre_process(csv_data_file_path='Data/Data_AWS_141223', resample_period='H')
+find_parameters(df1, col='Total')
 
-#find_parameters(df=df1, col='Total', cut_off=200, exog_var='Weekend')
-# ARIMA(4,0,4)(1,0,1)[24] ------ order=(1,0,0), seasonal_order=(1, 0, 0, 24))
+#sarimax_apply(df=df1, pred_period=72, forecast_periods=72, cut_off=250, order=(4,0,4), seasonal_order=(1, 0, 1, 24))
 
 def acf_plots(df, col='Total', m=24):
     fig, axes = plt.subplots(3, 2, figsize=(12, 12))
